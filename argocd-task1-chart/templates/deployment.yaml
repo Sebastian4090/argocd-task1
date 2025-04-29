@@ -1,18 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "argocd-task1-chart.fullname" . }}
+  name: {{ .Values.deployment.name }}
   labels:
-    {{- include "argocd-task1-chart.labels" . | nindent 4 }}
+    app: {{ .Values.labels.app }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-     app: {{ include "argocd-task1-chart.name" . }}
+     app: {{ .Values.labels.app }}
   template:
     metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
       labels:
-        app: {{ include "argocd-task1-chart.name" . }}
+        app: {{ .Values.labels.app }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -20,3 +24,32 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 80
+          env:
+            - name: SECRET_KEY_1
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: secret-key-1
+            - name: SECRET_KEY_2
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: secret-key-2
+            - name: SECRET_KEY_3
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: secret-key-3
+          volumeMounts:
+            - name: {{ .Values.volumeMounts.name }}
+              mountPath: {{ .Values.volumeMounts.mountPath }}
+              subPath: {{ .Values.volumeMounts.subPath }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.configmap.name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
