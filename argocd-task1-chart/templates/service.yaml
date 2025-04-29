@@ -4,8 +4,7 @@ metadata:
   name: {{ .Values.service.name }}
 spec:
   selector:
-    {{- include "argocd-task1-chart.labels" . | nindent 4 }}
-    component: replicaset
+    app: {{ .Values.labels.app }}
   ports:
     - protocol: TCP
       port: 8080
